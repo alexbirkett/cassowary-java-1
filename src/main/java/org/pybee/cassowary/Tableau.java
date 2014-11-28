@@ -1,7 +1,8 @@
 package org.pybee.cassowary;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -11,10 +12,10 @@ class Tableau
     // set of basic variables whose expressions contain them
     // i.e., it's a mapping from variables in expressions (a column) to the
     // set of rows that contain them
-    protected Hashtable<AbstractVariable, Set<AbstractVariable>> _columns;
+    protected Map<AbstractVariable, Set<AbstractVariable>> _columns;
 
     // _rows maps basic variables to the expressions for that row in the tableau
-    protected Hashtable<AbstractVariable, Expression> _rows;
+    protected Map<AbstractVariable, Expression> _rows;
 
     // the collection of basic variables that have infeasible rows
     // (used when reoptimizing)
@@ -32,8 +33,8 @@ class Tableau
     // the SimplexSolver class
     protected Tableau()
     {
-        _columns = new Hashtable<AbstractVariable, Set<AbstractVariable>>();
-        _rows = new Hashtable<AbstractVariable, Expression>();
+        _columns = new HashMap<AbstractVariable, Set<AbstractVariable>>();
+        _rows = new HashMap<AbstractVariable, Expression>();
         _infeasibleRows = new HashSet<AbstractVariable>();
         _externalRows = new HashSet<Variable>();
         _externalParametricVars = new HashSet<Variable>();
@@ -214,12 +215,12 @@ class Tableau
         _columns.remove(oldVar);
     }
 
-    protected final Hashtable<AbstractVariable, Set<AbstractVariable>> columns()
+    protected final Map<AbstractVariable, Set<AbstractVariable>> columns()
     {
         return _columns;
     }
 
-    protected final Hashtable<AbstractVariable, Expression> rows()
+    protected final Map<AbstractVariable, Expression> rows()
     {
         return _rows;
     }
