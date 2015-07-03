@@ -5,7 +5,7 @@ task wrapper(type: Wrapper) {
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
-group = 'org.pybee'
+group = 'no.agens'
 version = '1.0.0-SNAPSHOT'
 
 publishing {
