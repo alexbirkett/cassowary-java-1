@@ -1,8 +1,7 @@
 package org.pybee.cassowary;
 
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 
 class Tableau
@@ -11,32 +10,32 @@ class Tableau
     // set of basic variables whose expressions contain them
     // i.e., it's a mapping from variables in expressions (a column) to the
     // set of rows that contain them
-    protected Hashtable<AbstractVariable, Set<AbstractVariable>> _columns;
+    protected LinkedHashMap<AbstractVariable, LinkedHashSet<AbstractVariable>> _columns;
 
     // _rows maps basic variables to the expressions for that row in the tableau
-    protected Hashtable<AbstractVariable, Expression> _rows;
+    protected LinkedHashMap<AbstractVariable, Expression> _rows;
 
     // the collection of basic variables that have infeasible rows
     // (used when reoptimizing)
-    protected Set<AbstractVariable> _infeasibleRows;
+    protected LinkedHashSet<AbstractVariable> _infeasibleRows;
 
     // the set of rows where the basic variable is external
     // this was added to the Java/C++ versions to reduce time in setExternalVariables()
-    protected Set<Variable> _externalRows;
+    protected LinkedHashSet<Variable> _externalRows;
 
     // the set of external variables which are parametric
     // this was added to the Java/C++ versions to reduce time in setExternalVariables()
-    protected Set<Variable> _externalParametricVars;
+    protected LinkedHashSet<Variable> _externalParametricVars;
 
     // ctr is protected, since this only supports an ADT for
     // the SimplexSolver class
     protected Tableau()
     {
-        _columns = new Hashtable<AbstractVariable, Set<AbstractVariable>>();
-        _rows = new Hashtable<AbstractVariable, Expression>();
-        _infeasibleRows = new HashSet<AbstractVariable>();
-        _externalRows = new HashSet<Variable>();
-        _externalParametricVars = new HashSet<Variable>();
+        _columns = new LinkedHashMap<AbstractVariable, LinkedHashSet<AbstractVariable>>();
+        _rows = new LinkedHashMap<AbstractVariable, Expression>();
+        _infeasibleRows = new LinkedHashSet<AbstractVariable>();
+        _externalRows = new LinkedHashSet<Variable>();
+        _externalParametricVars = new LinkedHashSet<Variable>();
     }
 
     // Variable v has been removed from an expression.  If the
@@ -107,10 +106,10 @@ class Tableau
     // creating a new set if needed
     private final void insertColVar(AbstractVariable param_var, AbstractVariable rowvar)
     {
-        Set rowset = _columns.get(param_var);
+        LinkedHashSet rowset = _columns.get(param_var);
         if (rowset == null)
         {
-            rowset = new HashSet<AbstractVariable>();
+            rowset = new LinkedHashSet<AbstractVariable>();
             _columns.put(param_var, rowset);
         }
         rowset.add(rowvar);
@@ -146,7 +145,7 @@ class Tableau
     protected final void removeColumn(AbstractVariable var)
     {
         // remove the rows with the variables in varset
-        Set<AbstractVariable> rows = _columns.remove(var);
+        LinkedHashSet<AbstractVariable> rows = _columns.remove(var);
 
         if (rows != null) {
             for (AbstractVariable clv: rows)
@@ -175,7 +174,7 @@ class Tableau
         // the column mapping and remove the variable from the list
         // of rows it is known to be in
         for (AbstractVariable clv: expr.getTerms().keySet()) {
-            Set varset = (Set) _columns.get(clv);
+            LinkedHashSet varset = (LinkedHashSet) _columns.get(clv);
             if (varset != null)
             {
                 varset.remove(var);
@@ -214,12 +213,12 @@ class Tableau
         _columns.remove(oldVar);
     }
 
-    protected final Hashtable<AbstractVariable, Set<AbstractVariable>> columns()
+    protected final LinkedHashMap<AbstractVariable, LinkedHashSet<AbstractVariable>> columns()
     {
         return _columns;
     }
 
-    protected final Hashtable<AbstractVariable, Expression> rows()
+    protected final LinkedHashMap<AbstractVariable, Expression> rows()
     {
         return _rows;
     }

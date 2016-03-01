@@ -1,18 +1,18 @@
 package org.pybee.cassowary;
 
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 
 public class Expression
 {
     private double _constant;
-    private Hashtable<AbstractVariable, Double> _terms;
+    private LinkedHashMap<AbstractVariable, Double> _terms;
 
     public Expression(AbstractVariable clv, double value, double constant)
     {
         _constant = constant;
-        _terms = new Hashtable<AbstractVariable, Double>();
+        _terms = new LinkedHashMap<AbstractVariable, Double>();
         if (clv != null)
         {
             _terms.put(clv, new Double(value));
@@ -40,10 +40,10 @@ public class Expression
     }
 
     // for use by the clone method
-    protected Expression(double constant, Hashtable<AbstractVariable, Double> terms)
+    protected Expression(double constant, LinkedHashMap<AbstractVariable, Double> terms)
     {
         _constant = constant;
-        _terms = new Hashtable<AbstractVariable, Double>();
+        _terms = new LinkedHashMap<AbstractVariable, Double>();
 
         for (AbstractVariable clv: terms.keySet())
         {
@@ -380,7 +380,7 @@ public class Expression
         _constant = c;
     }
 
-    public final Hashtable<AbstractVariable, Double> getTerms()
+    public final LinkedHashMap<AbstractVariable, Double> getTerms()
     {
         return _terms;
     }

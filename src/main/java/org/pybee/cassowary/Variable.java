@@ -1,11 +1,11 @@
 package org.pybee.cassowary;
 
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
 
 
 public class Variable extends AbstractVariable
 {
-    private static Hashtable _ourVarMap;
+    private static LinkedHashMap _ourVarMap;
 
     private double _value;
 
@@ -116,12 +116,12 @@ public class Variable extends AbstractVariable
         return _attachedObject;
     }
 
-    public static void setVarMap(Hashtable map)
+    public static void setVarMap(LinkedHashMap map)
     {
         _ourVarMap = map;
     }
 
-    public static Hashtable getVarMap()
+    public static LinkedHashMap getVarMap()
     {
         return _ourVarMap;
     }

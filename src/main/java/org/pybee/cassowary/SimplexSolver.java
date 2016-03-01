@@ -1,12 +1,10 @@
 package org.pybee.cassowary;
 
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Stack;
-import java.util.Vector;
 
 
 public class SimplexSolver extends Tableau
@@ -15,16 +13,16 @@ public class SimplexSolver extends Tableau
 
     // the arrays of positive and negative error vars for the stay constraints
     // (need both positive and negative since they have only non-negative values)
-    private Vector<SlackVariable> _stayMinusErrorVars;
-    private Vector<SlackVariable> _stayPlusErrorVars;
+    private ArrayList<SlackVariable> _stayMinusErrorVars;
+    private ArrayList<SlackVariable> _stayPlusErrorVars;
 
     // give error variables for a non required constraint,
     // maps to SlackVariable-s
-    private Hashtable<AbstractConstraint, Set<AbstractVariable>> _errorVars;
+    private LinkedHashMap<AbstractConstraint, LinkedHashSet<AbstractVariable>> _errorVars;
 
     // Return a lookup table giving the marker variable for each
     // constraint (used when deleting a constraint).
-    private Hashtable<AbstractConstraint, AbstractVariable> _markerVars;
+    private LinkedHashMap<AbstractConstraint, AbstractVariable> _markerVars;
 
     private ObjectiveVariable _objective;
 
@@ -33,13 +31,13 @@ public class SimplexSolver extends Tableau
     // edit constraint (the edit plus/minus vars, the index [for old-style
     // resolve(Vector...) interface], and the previous value.
     // (EditInfo replaces the parallel vectors from the Smalltalk impl.)
-    private Hashtable<Variable, EditInfo> _editVarMap; // map Variable to a EditInfo
+    private LinkedHashMap<Variable, EditInfo> _editVarMap; // map Variable to a EditInfo
 
     private long _slackCounter;
     private long _artificialCounter;
     private long _dummyCounter;
 
-    private Vector<Double> _resolve_pair;
+    private ArrayList<Double> _resolve_pair;
 
     private double _epsilon;
 
@@ -52,18 +50,18 @@ public class SimplexSolver extends Tableau
     // Ctr initializes the fields, and creates the objective row
     public SimplexSolver()
     {
-        _stayMinusErrorVars = new Vector<SlackVariable>();
-        _stayPlusErrorVars = new Vector<SlackVariable>();
-        _errorVars = new Hashtable<AbstractConstraint, Set<AbstractVariable>>();
-        _markerVars = new Hashtable<AbstractConstraint, AbstractVariable>();
+        _stayMinusErrorVars = new ArrayList<SlackVariable>();
+        _stayPlusErrorVars = new ArrayList<SlackVariable>();
+        _errorVars = new LinkedHashMap<AbstractConstraint, LinkedHashSet<AbstractVariable>>();
+        _markerVars = new LinkedHashMap<AbstractConstraint, AbstractVariable>();
 
-        _resolve_pair = new Vector<Double>(2);
-        _resolve_pair.addElement(new Double(0.0));
-        _resolve_pair.addElement(new Double(0.0));
+        _resolve_pair = new ArrayList<Double>(2);
+        _resolve_pair.add(new Double(0.0));
+        _resolve_pair.add(new Double(0.0));
 
         _objective = new ObjectiveVariable("Z");
 
-        _editVarMap = new Hashtable<Variable, EditInfo>();
+        _editVarMap = new LinkedHashMap<Variable, EditInfo>();
 
         _slackCounter = 0;
         _artificialCounter = 0;
@@ -108,7 +106,7 @@ public class SimplexSolver extends Tableau
     public final SimplexSolver addConstraint(AbstractConstraint cn)
             throws RequiredFailure, InternalError
     {
-        Vector eplus_eminus = new Vector<Double>(2);
+        ArrayList eplus_eminus = new ArrayList<Double>(2);
         Double prevEConstant = new Double(0.0);
         Expression expr = newExpression(cn, eplus_eminus, prevEConstant);
         boolean fAddedOkDirectly = false;
@@ -139,8 +137,8 @@ public class SimplexSolver extends Tableau
         {
             int i = _editVarMap.size();
             EditConstraint cnEdit = (EditConstraint) cn;
-            AbstractVariable clvEplus = (AbstractVariable) eplus_eminus.elementAt(0);
-            AbstractVariable clvEminus = (AbstractVariable) eplus_eminus.elementAt(1);
+            AbstractVariable clvEplus = (SlackVariable) eplus_eminus.get(0);
+            AbstractVariable clvEminus = (SlackVariable) eplus_eminus.get(1);
             _editVarMap.put(
                 cnEdit.getVariable(),
                 new EditInfo(cnEdit, clvEplus, clvEminus, prevEConstant.doubleValue(), i)
@@ -247,13 +245,13 @@ public class SimplexSolver extends Tableau
         try
         {
             // Need to use an enumeration here to avoid concurrent modifications
-            Enumeration<Variable> e = _editVarMap.keys();
-            while (e.hasMoreElements())
-            {
-                Variable v = e.nextElement();
-                EditInfo cei = _editVarMap.get(v);
-                if (cei.getIndex() >= n)
-                {
+            Iterator<java.util.Map.Entry<Variable, EditInfo>> iterator = _editVarMap.entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                java.util.Map.Entry<Variable, EditInfo> editInfoEntry = iterator.next();
+                Variable v = editInfoEntry.getKey();
+                EditInfo cei = editInfoEntry.getValue();
+                if (cei.getIndex() >= n) {
                     removeEditVar(v);
                 }
             }
@@ -304,7 +302,7 @@ public class SimplexSolver extends Tableau
 
         Expression zRow = rowExpression(_objective);
 
-        Set<AbstractVariable> eVars = _errorVars.get(cn);
+        LinkedHashSet<AbstractVariable> eVars = _errorVars.get(cn);
         if (eVars != null) {
             for (AbstractVariable clv: eVars)
             {
@@ -331,7 +329,7 @@ public class SimplexSolver extends Tableau
         if (rowExpression(marker) == null)
         {
             // not in the basis, so need to do some work
-            Set<AbstractVariable> col = _columns.get(marker);
+            LinkedHashSet<AbstractVariable> col = _columns.get(marker);
 
             AbstractVariable exitVar = null;
             double minRatio = 0.0;
@@ -412,8 +410,8 @@ public class SimplexSolver extends Tableau
             if (eVars != null) {
                 for (int i = 0; i < _stayPlusErrorVars.size(); i++)
                 {
-                    eVars.remove(_stayPlusErrorVars.elementAt(i));
-                    eVars.remove(_stayMinusErrorVars.elementAt(i));
+                    eVars.remove(_stayPlusErrorVars.get(i));
+                    eVars.remove(_stayMinusErrorVars.get(i));
                 }
             }
         }
@@ -463,7 +461,7 @@ public class SimplexSolver extends Tableau
     // of a list of edits and then try to resolve with this function
     // (you'll get the wrong answer, because the indices will be wrong
     // in the EditInfo objects)
-    public final void resolve(Vector<Double> newEditConstants)
+    public final void resolve(ArrayList<Double> newEditConstants)
             throws InternalError
     {
         for (Variable v: _editVarMap.keySet())
@@ -647,7 +645,7 @@ public class SimplexSolver extends Tableau
         return bstr.toString();
     }
 
-    public Hashtable<AbstractConstraint, AbstractVariable> getConstraintMap()
+    public LinkedHashMap<AbstractConstraint, AbstractVariable> getConstraintMap()
     {
         return _markerVars;
     }
@@ -748,7 +746,7 @@ public class SimplexSolver extends Tableau
         boolean foundUnrestricted = false;
         boolean foundNewRestricted = false;
 
-        final Hashtable<AbstractVariable, Double> terms = expr.getTerms();
+        final LinkedHashMap<AbstractVariable, Double> terms = expr.getTerms();
 
         for (AbstractVariable v: terms.keySet())
         {
@@ -771,7 +769,7 @@ public class SimplexSolver extends Tableau
                 {
                     if (!foundNewRestricted && !v.isDummy() && c < 0.0)
                     {
-                        final Set<AbstractVariable> col = _columns.get(v);
+                        final LinkedHashSet<AbstractVariable> col = _columns.get(v);
                         if (col == null || (col.size() == 1 && columnsHasKey(_objective)))
                         {
                             subject = v;
@@ -886,7 +884,6 @@ public class SimplexSolver extends Tableau
             Iterator<AbstractVariable> elements = _infeasibleRows.iterator();
             AbstractVariable exitVar = elements.next();
             _infeasibleRows.remove(exitVar);
-
             AbstractVariable entryVar = null;
             Expression expr = rowExpression(exitVar);
             if (expr != null )
@@ -895,7 +892,8 @@ public class SimplexSolver extends Tableau
                 {
                     double ratio = Double.MAX_VALUE;
                     double r;
-                    Hashtable<AbstractVariable, Double> terms = expr.getTerms();
+
+                    LinkedHashMap<AbstractVariable, Double> terms = expr.getTerms();
                     for (AbstractVariable v: terms.keySet())
                     {
                         double c = terms.get(v).doubleValue();
@@ -925,7 +923,7 @@ public class SimplexSolver extends Tableau
     // Normalize if necessary so that the constant is non-negative.  If
     // the constraint is non-required give its error variables an
     // appropriate weight in the objective function.
-    protected final Expression newExpression(AbstractConstraint cn, Vector eplus_eminus, Double prevEConstant)
+    protected final Expression newExpression(AbstractConstraint cn, ArrayList eplus_eminus, Double prevEConstant)
     {
         final Expression cnExpr = cn.getExpression();
         Expression expr = new Expression(cnExpr.getConstant());
@@ -933,7 +931,7 @@ public class SimplexSolver extends Tableau
         DummyVariable dummyVar = new DummyVariable();
         SlackVariable eminus = new SlackVariable();
         SlackVariable eplus = new SlackVariable();
-        final Hashtable<AbstractVariable, Double> cnTerms = cnExpr.getTerms();
+        final LinkedHashMap<AbstractVariable, Double> cnTerms = cnExpr.getTerms();
         for (AbstractVariable v: cnTerms.keySet())
         {
             double c = cnTerms.get(v).doubleValue();
@@ -973,8 +971,8 @@ public class SimplexSolver extends Tableau
             {
                 ++_dummyCounter;
                 dummyVar = new DummyVariable(_dummyCounter, "d");
-                eplus_eminus.addElement(dummyVar);
-                eplus_eminus.addElement(dummyVar);
+                eplus_eminus.add(dummyVar);
+                eplus_eminus.add(dummyVar);
                 expr.setVariable(dummyVar, 1.0);
                 _markerVars.put(cn, dummyVar);
             }
@@ -997,13 +995,13 @@ public class SimplexSolver extends Tableau
                 insertErrorVar(cn, eplus);
                 if (cn.isStayConstraint())
                 {
-                    _stayPlusErrorVars.addElement(eplus);
-                    _stayMinusErrorVars.addElement(eminus);
+                    _stayPlusErrorVars.add(eplus);
+                    _stayMinusErrorVars.add(eminus);
                 }
                 else if (cn.isEditConstraint())
                 {
-                    eplus_eminus.addElement(eplus);
-                    eplus_eminus.addElement(eminus);
+                    eplus_eminus.add(eplus);
+                    eplus_eminus.add(eminus);
                     // FIXME: In the original Java implementation, this was a
                     // setValue call; since prevEConstant is passed in by reference,
                     // this means the value should be reflected outside this method.
@@ -1033,7 +1031,7 @@ public class SimplexSolver extends Tableau
         while (true)
         {
             double objectiveCoeff = 0;
-            Hashtable<AbstractVariable, Double> terms = zRow.getTerms();
+            LinkedHashMap<AbstractVariable, Double> terms = zRow.getTerms();
             for (AbstractVariable v: terms.keySet()) {
                 double c = ((Double) terms.get(v)).doubleValue();
                 if (v.isPivotable() && c < objectiveCoeff)
@@ -1048,7 +1046,7 @@ public class SimplexSolver extends Tableau
             }
 
             double minRatio = Double.MAX_VALUE;
-            Set<AbstractVariable> columnVars = _columns.get(entryVar);
+            LinkedHashSet<AbstractVariable> columnVars = _columns.get(entryVar);
             double r = 0.0;
             for (AbstractVariable v: columnVars) {
                 if (v.isPivotable())
@@ -1154,10 +1152,10 @@ public class SimplexSolver extends Tableau
     // the _errorVars set, creating the mapping with put as necessary
     protected final void insertErrorVar(AbstractConstraint cn, AbstractVariable var)
     {
-        Set cnset = (Set) _errorVars.get(var);
+        LinkedHashSet cnset = (LinkedHashSet) _errorVars.get(var);
         if (cnset == null)
         {
-            cnset = new HashSet<AbstractVariable>();
+            cnset = new LinkedHashSet<AbstractVariable>();
             _errorVars.put(cn, cnset);
             cnset.add(var);
         }
